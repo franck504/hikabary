@@ -1,0 +1,104 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String          @id @default(cuid())
+  name          String
+  email         String?         @unique
+  phone         String          @unique
+  password      String          
+  role          Role            @default(SPECTATOR)
+  bio           String?
+  photo         String?
+  contexts      Context[]       @relation("CreatedContexts")
+  sessions      Session[]       @relation("SpeakerSessions")
+  reactions     Reaction[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model Context {
+  id            String          @id @default(cuid())
+  title         String
+  type          String          
+  sessionMode   SessionMode     @default(CONTINUOUS_LIVE)
+  image         String?
+  description   String          @db.Text
+  rules         String?         @db.Text 
+  participantRoles Json?        @db.JsonB
+  
+  authorId      String
+  author        User            @relation("CreatedContexts", fields: [authorId], references: [id])
+  
+  sessions      Session[]
+  
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model Session {
+  id          String    @id @default(cuid())
+  title       String?   
+  status      String    @default("STARTING") 
+  participantRoleKey   String?
+  participantRoleLabel String?
+  
+  contextId   String
+  context     Context   @relation(fields: [contextId], references: [id])
+  
+  speakerId   String
+  speaker     User      @relation("SpeakerSessions", fields: [speakerId], references: [id])
+  
+  reactions   Reaction[]
+  signals     StreamSignal[]
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Reaction {
+  id        String   @id @default(cuid())
+  type      String   
+  
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id])
+  
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  
+  createdAt DateTime @default(now())
+}
+
+model StreamSignal {
+  id        String   @id @default(cuid())
+  type      String   // 'offer', 'answer', 'candidate'
+  data      String   @db.Text // Le contenu JSON de la clé WebRTC
+  
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id])
+  
+  senderId  String   // ID de celui qui envoie le signal
+  
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  INSTITUTION
+  PRO
+  BEGINNER
+  STUDENT
+  SPECTATOR
+}
+
+enum SessionMode {
+  CONTINUOUS_LIVE
+  ASYNCHRONOUS_LIVE
+}

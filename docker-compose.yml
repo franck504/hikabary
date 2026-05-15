@@ -1,0 +1,106 @@
+services:
+  # ====== BASE DE DONNÉES ======
+  postgres:
+    image: postgres:15-alpine
+    container_name: kabary-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kabary_dev}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kabary_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-kabary_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kabary_dev} -d ${POSTGRES_DB:-kabary_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ====== CACHE ======
+  redis:
+    image: redis:7-alpine
+    container_name: kabary-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ====== TEST EMAILS ======
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: kabary-mailhog
+    ports:
+      - "8025:8025"  # Interface web
+      - "1025:1025"  # SMTP
+
+  # ====== BACKEND EXPRESS ======
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: kabary-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: development
+      PORT: 5000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-kabary_dev}:${POSTGRES_PASSWORD:-kabary_pass}@postgres:5432/${POSTGRES_DB:-kabary_db}?schema=public
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_kabary_2026}
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+    volumes:
+      # Hot-reload : monter le code source
+      - ./apps/backend/src:/app/apps/backend/src
+      - ./apps/backend/prisma:/app/apps/backend/prisma
+      - ./packages/shared/src:/app/packages/shared/src
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "
+        cd apps/backend &&
+        npx prisma generate &&
+        npx prisma db push --skip-generate &&
+        npx nodemon --config nodemon.json src/index.ts
+      "
+
+  # ====== FRONTEND NEXT.JS ======
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: kabary-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: /api
+      NEXT_PUBLIC_APP_NAME: Kabary Platform
+    volumes:
+      # Hot-reload : monter le code source et les configs
+      - ./apps/web/src:/app/apps/web/src
+      - ./apps/web/public:/app/apps/web/public
+      - ./apps/web/next.config.mjs:/app/apps/web/next.config.mjs
+      - ./packages/shared/src:/app/packages/shared/src
+      - ./packages/ui/src:/app/packages/ui/src
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
