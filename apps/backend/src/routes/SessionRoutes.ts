@@ -7,6 +7,7 @@ const router = Router();
 // Voir les sessions en cours (Public)
 router.get("/active", sessionController.listActive);
 router.get("/:id", sessionController.getOne);
+router.patch("/:id/thumbnail", authMiddleware, sessionController.updateThumbnail);
 
 // Réagir à une session (Public ou Connecté)
 router.post("/:id/react", sessionController.react);

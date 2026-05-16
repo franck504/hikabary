@@ -46,8 +46,8 @@ export function StyledDropdown({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className={`w-full appearance-none bg-white/95 border border-neutral-200 rounded-xl text-left font-black text-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-sm hover:border-primary/30 transition-colors ${
-          compact ? "py-2 px-3 text-xs" : "py-3 px-4 text-sm"
+        className={`w-full appearance-none bg-white/95 border border-neutral-200 rounded-xl text-left font-black text-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-sm hover:border-primary/30 transition-colors flex items-center pr-9 ${
+          compact ? "h-10 px-3 text-xs" : "h-12 px-4 text-sm"
         }`}
         aria-haspopup="listbox"
         aria-expanded={open}

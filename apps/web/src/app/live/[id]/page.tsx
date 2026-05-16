@@ -31,6 +31,8 @@ export default function LiveAuditorium() {
   const streamRef = useRef<MediaStream | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const peersRef = useRef<{ [key: string]: RTCPeerConnection }>({});
+  const thumbnailTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const thumbnailKickoffRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [isMicOn, setIsMicOn] = useState(true);
   const [isCameraOn, setIsCameraOn] = useState(true);
@@ -68,8 +70,13 @@ export default function LiveAuditorium() {
       setMessages(prev => [...prev, msg]);
     });
 
-    const isOwner = user?.id === session.speakerId;
-    if (isOwner) {
+    const isParticipant = Boolean(
+      user?.id && (
+        user.id === session.speakerId ||
+        session.participants?.some((participant: any) => participant.id === user.id)
+      )
+    );
+    if (isParticipant) {
       socket.on("user-joined", (userId) => initPeerConnection(userId, true));
     }
 
@@ -99,7 +106,7 @@ export default function LiveAuditorium() {
     peersRef.current[userId] = pc;
     pc.onicecandidate = (e) => e.candidate && socketRef.current?.emit("signal", { roomId: id, signal: e.candidate, to: userId });
     pc.ontrack = (e) => {
-      if (user?.id !== session?.speakerId && videoRef.current) videoRef.current.srcObject = e.streams[0];
+      if (!session?.participants?.some((participant: any) => participant.id === user?.id) && user?.id !== session?.speakerId && videoRef.current) videoRef.current.srcObject = e.streams[0];
     };
     if (streamRef.current) streamRef.current.getTracks().forEach(t => pc.addTrack(t, streamRef.current!));
     if (isInitiator) {
@@ -110,8 +117,13 @@ export default function LiveAuditorium() {
   };
 
   useEffect(() => {
-    const isOwner = user?.id === session?.speakerId;
-    if (isOwner && !loading) {
+    const isParticipant = Boolean(
+      user?.id && (
+        user.id === session?.speakerId ||
+        session?.participants?.some((participant: any) => participant.id === user.id)
+      )
+    );
+    if (isParticipant && !loading) {
       navigator.mediaDevices.getUserMedia({ video: true, audio: true })
         .then(stream => {
           streamRef.current = stream;
@@ -120,6 +132,56 @@ export default function LiveAuditorium() {
         .catch(() => setMediaErrorMessage("Matériel non détecté."));
     }
   }, [user, session, loading]);
+
+  useEffect(() => {
+    const isParticipant = Boolean(
+      user?.id && (
+        user.id === session?.speakerId ||
+        session?.participants?.some((participant: any) => participant.id === user.id)
+      )
+    );
+
+    if (!isParticipant || loading || !session || !id) return;
+
+    const captureAndUploadThumbnail = async () => {
+      const video = videoRef.current;
+      const token = localStorage.getItem("token");
+      if (!video || !token || video.readyState < 2 || video.videoWidth === 0 || video.videoHeight === 0) return;
+
+      const maxWidth = 960;
+      const scale = Math.min(1, maxWidth / video.videoWidth);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(video.videoWidth * scale);
+      canvas.height = Math.round(video.videoHeight * scale);
+
+      const context = canvas.getContext("2d");
+      if (!context) return;
+
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const liveThumbnail = canvas.toDataURL("image/jpeg", 0.72);
+
+      try {
+        await fetch(`${API_URL}/sessions/${id}/thumbnail`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ liveThumbnail }),
+        });
+      } catch (error) {
+        console.error("Erreur miniature live:", error);
+      }
+    };
+
+    thumbnailKickoffRef.current = setTimeout(captureAndUploadThumbnail, 4000);
+    thumbnailTimerRef.current = setInterval(captureAndUploadThumbnail, 5 * 60 * 1000);
+
+    return () => {
+      if (thumbnailKickoffRef.current) clearTimeout(thumbnailKickoffRef.current);
+      if (thumbnailTimerRef.current) clearInterval(thumbnailTimerRef.current);
+    };
+  }, [id, loading, session, user]);
 
   const sendMessage = () => {
     if (!inputValue.trim()) return;
@@ -139,7 +201,17 @@ export default function LiveAuditorium() {
     </div>
   );
 
-  const isOwner = user?.id === session?.speakerId;
+  const isOwner = Boolean(
+    user?.id && (
+      user.id === session?.speakerId ||
+      session?.participants?.some((participant: any) => participant.id === user.id)
+    )
+  );
+  const liveParticipants = session?.participants?.length
+    ? session.participants
+    : session?.speaker
+      ? [{ id: session.speakerId, name: session.speaker.name, photo: session.speaker.photo, participantRoleLabel: session.participantRoleLabel }]
+      : [];
 
   return (
     <div className="min-h-screen bg-surface font-sans pt-16 lg:pt-20">
@@ -219,17 +291,23 @@ export default function LiveAuditorium() {
             {/* Info Bar */}
             <div className="bg-white border-t border-neutral-50 p-3 lg:p-5 flex items-center justify-between z-10">
               <div className="flex items-center gap-3 lg:gap-4">
-                <div className="w-10 lg:w-12 h-10 lg:h-12 rounded-lg lg:rounded-xl bg-primary flex items-center justify-center text-white text-base lg:text-lg font-black shadow-md uppercase">
-                  {session.speaker?.photo ? (
-                    <Image src={session.speaker.photo} alt={session.speaker.name} width={48} height={48} className="w-full h-full object-cover rounded-lg lg:rounded-xl" />
-                  ) : (
-                    session.speaker.name[0]
-                  )}
+                <div className="flex -space-x-2">
+                  {liveParticipants.slice(0, 2).map((participant: any, index: number) => (
+                    <div key={participant.id || index} className="w-10 lg:w-12 h-10 lg:h-12 rounded-lg lg:rounded-xl bg-primary border-2 border-white flex items-center justify-center text-white text-base lg:text-lg font-black shadow-md uppercase overflow-hidden">
+                      {participant.photo ? (
+                        <Image src={participant.photo} alt={participant.name || "Mpikabary"} width={48} height={48} className="w-full h-full object-cover" />
+                      ) : (
+                        participant.name?.[0] || "M"
+                      )}
+                    </div>
+                  ))}
                 </div>
                 <div>
                   <h1 className="text-base lg:text-lg font-black tracking-tight text-neutral-900 leading-tight">{session.title}</h1>
                   <div className="flex items-center gap-2">
-                    <span className="text-[8px] lg:text-[9px] text-primary font-black uppercase tracking-widest">{session.speaker.name}</span>
+                    <span className="text-[8px] lg:text-[9px] text-primary font-black uppercase tracking-widest">
+                      {liveParticipants.map((participant: any) => participant.name).filter(Boolean).join(" · ") || session.speaker.name}
+                    </span>
                     <span className="w-1 h-1 rounded-full bg-neutral-200"></span>
                     <span className="text-[8px] lg:text-[9px] text-neutral-400 font-bold uppercase tracking-widest">{session.context.type}</span>
                   </div>

@@ -42,6 +42,13 @@ type ActiveSession = {
     role: string;
     photo?: string | null;
   };
+  participants?: {
+    id?: string | null;
+    name?: string | null;
+    photo?: string | null;
+    participantRoleKey?: string | null;
+    participantRoleLabel?: string | null;
+  }[];
 };
 
 export default function ContextDetailsPage() {
@@ -110,6 +117,12 @@ export default function ContextDetailsPage() {
 
   const getRoleOccupants = (roleKey: string, roleLabel: string) => {
     return activeSessions.filter((session) => {
+      const participantMatch = session.participants?.some((participant) => {
+        if (participant.participantRoleKey && participant.participantRoleKey === roleKey) return true;
+        if (participant.participantRoleLabel && participant.participantRoleLabel.toLowerCase() === roleLabel.toLowerCase()) return true;
+        return false;
+      });
+      if (participantMatch) return true;
       if (session.participantRoleKey && session.participantRoleKey === roleKey) return true;
       if (session.participantRoleLabel && session.participantRoleLabel.toLowerCase() === roleLabel.toLowerCase()) return true;
       const title = String(session.title || "").toLowerCase();

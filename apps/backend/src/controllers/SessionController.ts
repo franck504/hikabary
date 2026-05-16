@@ -44,6 +44,26 @@ export class SessionController {
     }
   }
 
+  async updateThumbnail(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user?.id;
+      const { liveThumbnail } = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ error: "Tsy nahitana mpampiasa. Midira aloha." });
+      }
+
+      if (typeof liveThumbnail !== "string" || !liveThumbnail.trim()) {
+        return res.status(400).json({ error: "Tsy misy sary nalefa." });
+      }
+
+      const result = await sessionService.updateLiveThumbnail(req.params.id, userId, liveThumbnail);
+      res.json(result);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
   async react(req: Request, res: Response) {
     try {
       const { type } = req.body;

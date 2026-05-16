@@ -222,35 +222,42 @@ export default function CreateContextPage() {
         : true;
 
   return (
-    <div className="min-h-screen bg-surface pt-32 pb-20">
-      <div className="container mx-auto px-6 lg:px-20">
-        <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-surface pt-32 pb-20 relative overflow-hidden">
+      <div
+        className="absolute inset-0 pointer-events-none bg-fixed opacity-[0.12]"
+        style={{
+          backgroundImage: "url('/hero_pattern.png')",
+          backgroundSize: "650px",
+          backgroundPosition: "center",
+        }}
+      />
+      <div className="w-full px-5 md:px-8 lg:px-10 relative z-10">
+        <div className="w-full">
           <Link href="/library" className="inline-flex items-center gap-2 text-neutral-400 hover:text-primary transition-all text-[10px] font-black uppercase tracking-widest mb-10 group">
             <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> HIVERINA AMIN'NY BOKY
           </Link>
 
-          <div className="pro-card p-6 md:p-8 bg-white shadow-2xl shadow-primary/5">
-            <header className="mb-8 border-b border-neutral-100 pb-8">
-              <div className="inline-flex items-center gap-2 bg-primary/5 text-primary px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest mb-4">
-                <BookOpen size={14} /> Forona vaovao
-              </div>
-              <h1 className="text-3xl md:text-4xl font-black text-neutral-900 uppercase tracking-tighter leading-none mb-4">
-                Hanorona Lohahevitra
-              </h1>
-              <p className="text-neutral-500 font-medium">
-                Fenoy ny mombamomba ny Kabary tianao hapetraka eto amin'ny sehatra mba ho hitan'ny mpikabary.
-              </p>
-            </header>
+          <header className="mb-8">
+            <div className="inline-flex h-9 items-center gap-2 bg-primary/5 text-primary px-3 rounded-xl text-[9px] font-black uppercase tracking-widest mb-4">
+              <BookOpen size={14} /> Forona vaovao
+            </div>
+            <h1 className="text-3xl md:text-4xl font-black text-neutral-900 uppercase tracking-tighter leading-none mb-4">
+              Hanorona Lohahevitra
+            </h1>
+            <p className="text-neutral-500 font-medium max-w-2xl">
+              Fenoy ny mombamomba ny Kabary tianao hapetraka eto amin'ny sehatra mba ho hitan'ny mpikabary.
+            </p>
+          </header>
 
-            {error && (
-              <div className="bg-red-50 text-red-600 p-6 rounded-2xl mb-10 text-sm flex items-center gap-3 border border-red-100 font-bold">
-                <AlertCircle size={20} /> {error}
-              </div>
-            )}
+          {error && (
+            <div className="bg-red-50 text-red-600 p-6 rounded-2xl mb-8 text-sm flex items-center gap-3 border border-red-100 font-bold">
+              <AlertCircle size={20} /> {error}
+            </div>
+          )}
 
-            <form onSubmit={handleSubmit}>
-              <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)_320px] gap-6">
-                <aside className="lg:sticky lg:top-28 h-fit">
+          <form onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 lg:grid-cols-[340px_minmax(0,1fr)_340px] gap-6 items-start">
+                <aside className="pro-card p-4 bg-white lg:sticky lg:top-28 h-fit">
                   <div className="space-y-2">
                     {steps.map((step, index) => {
                       const done = index < currentStep;
@@ -260,7 +267,7 @@ export default function CreateContextPage() {
                           key={step.key}
                           type="button"
                           onClick={() => setCurrentStep(index)}
-                          className={`w-full text-left rounded-xl border px-3 py-3 transition-colors ${
+                          className={`w-full min-h-12 text-left rounded-xl border px-3 py-0 transition-colors ${
                             active ? "border-primary/30 bg-primary/5" : "border-neutral-100 bg-white hover:border-neutral-200"
                           }`}
                         >
@@ -274,7 +281,7 @@ export default function CreateContextPage() {
                   </div>
                 </aside>
 
-                <section className="space-y-8">
+                <section className="pro-card p-6 md:p-8 bg-white space-y-8">
                   {currentStep === 0 && (
                     <>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -285,7 +292,7 @@ export default function CreateContextPage() {
                           <input
                             type="text"
                             required
-                            className="w-full bg-neutral-50 border border-neutral-100 rounded-xl p-4 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                            className="w-full h-12 bg-neutral-50 border border-neutral-100 rounded-xl px-4 py-0 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                             placeholder="o.hat: Fangataham-bady"
                             value={formData.title}
                             onChange={(e) => setFormData({...formData, title: e.target.value})}
@@ -343,7 +350,7 @@ export default function CreateContextPage() {
                         <button
                           type="button"
                           onClick={addParticipantRole}
-                          className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-lg border border-neutral-200 bg-white hover:border-primary/40 hover:text-primary transition-colors"
+                          className="inline-flex h-10 items-center gap-2 text-[10px] font-black uppercase tracking-widest px-3 py-0 rounded-xl border border-neutral-200 bg-white hover:border-primary/40 hover:text-primary transition-colors"
                         >
                           <Plus size={12} />
                           Ampio andraikitra
@@ -363,7 +370,7 @@ export default function CreateContextPage() {
                                 placeholder="Anarana andraikitra"
                                 value={role.label}
                                 onChange={(e) => updateParticipantRole(index, { label: e.target.value })}
-                                className="w-full bg-white border border-neutral-100 rounded-lg px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                className="w-full h-10 bg-white border border-neutral-100 rounded-xl px-3 py-0 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20"
                               />
                               <input
                                 type="number"
@@ -372,7 +379,7 @@ export default function CreateContextPage() {
                                 value={formData.sessionMode === "CONTINUOUS_LIVE" ? 1 : role.slots}
                                 onChange={(e) => updateParticipantRole(index, { slots: Number(e.target.value) || 1 })}
                                 disabled={formData.sessionMode === "CONTINUOUS_LIVE"}
-                                className="w-full bg-white border border-neutral-100 rounded-lg px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                className="w-full h-10 bg-white border border-neutral-100 rounded-xl px-3 py-0 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20"
                                 title="Isan'ny mpikabary amin'ity andraikitra ity"
                               />
                             </div>
@@ -381,7 +388,7 @@ export default function CreateContextPage() {
                               placeholder="Famaritana fohy..."
                               value={role.description}
                               onChange={(e) => updateParticipantRole(index, { description: e.target.value })}
-                              className="w-full bg-white border border-neutral-100 rounded-lg px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20"
+                              className="w-full bg-white border border-neutral-100 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20"
                             />
                             <div className="flex items-center justify-between">
                               <label className="inline-flex items-center gap-2 text-xs font-bold text-neutral-600">
@@ -417,7 +424,7 @@ export default function CreateContextPage() {
                         <textarea
                           required
                           rows={4}
-                          className="w-full bg-neutral-50 border border-neutral-100 rounded-xl p-4 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                          className="w-full bg-neutral-50 border border-neutral-100 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                           placeholder="Lazao eto ny antsipirian'ity lohahevitra ity..."
                           value={formData.description}
                           onChange={(e) => setFormData({...formData, description: e.target.value})}
@@ -429,7 +436,7 @@ export default function CreateContextPage() {
                         </label>
                         <input
                           type="number"
-                          className="w-full bg-neutral-50 border border-neutral-100 rounded-xl p-4 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                          className="w-full h-12 bg-neutral-50 border border-neutral-100 rounded-xl px-4 py-0 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                           value={formData.duration}
                           onChange={(e) => setFormData({...formData, duration: e.target.value})}
                         />
@@ -486,7 +493,7 @@ export default function CreateContextPage() {
                         </label>
                         <textarea
                           rows={4}
-                          className="w-full bg-neutral-50 border border-neutral-100 rounded-xl p-4 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                          className="w-full bg-neutral-50 border border-neutral-100 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                           placeholder="Ohatra: Teny madio, fanajana ny taona..."
                           value={formData.rules}
                           onChange={(e) => setFormData({...formData, rules: e.target.value})}
@@ -498,7 +505,7 @@ export default function CreateContextPage() {
                         </label>
                         <textarea
                           rows={4}
-                          className="w-full bg-neutral-50 border border-neutral-100 rounded-xl p-4 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                          className="w-full bg-neutral-50 border border-neutral-100 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                           placeholder="Lazao ireo lohahevitra tsy azo kasihina..."
                           value={formData.restrictions}
                           onChange={(e) => setFormData({...formData, restrictions: e.target.value})}
@@ -512,7 +519,7 @@ export default function CreateContextPage() {
                       type="button"
                       onClick={() => setCurrentStep((prev) => Math.max(0, prev - 1))}
                       disabled={currentStep === 0}
-                      className="pro-button-outline px-5 py-2.5 disabled:opacity-50"
+                      className="pro-button-outline px-5 disabled:opacity-50"
                     >
                       <ArrowLeft size={16} />
                       Dingana teo aloha
@@ -522,7 +529,7 @@ export default function CreateContextPage() {
                         type="button"
                         onClick={() => setCurrentStep((prev) => Math.min(steps.length - 1, prev + 1))}
                         disabled={!canGoNext}
-                        className="pro-button-primary px-5 py-2.5 disabled:opacity-50"
+                        className="pro-button-primary px-5 disabled:opacity-50"
                       >
                         Dingana manaraka
                         <ArrowRight size={16} />
@@ -531,7 +538,7 @@ export default function CreateContextPage() {
                       <button
                         type="submit"
                         disabled={loading}
-                        className="pro-button-primary px-6 py-2.5 disabled:opacity-60"
+                        className="pro-button-primary px-6 disabled:opacity-60"
                       >
                         {loading ? (
                           <div className="w-5 h-5 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -546,8 +553,10 @@ export default function CreateContextPage() {
                   </div>
                 </section>
 
-                <aside className="lg:sticky lg:top-28 h-fit border border-neutral-100 rounded-2xl bg-neutral-50/70 p-4 space-y-4">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Aperçu dynamique</div>
+                <aside className="pro-card lg:sticky lg:top-28 h-fit bg-white p-4 space-y-4">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-neutral-500">
+                    Aperçu dynamique
+                  </div>
                   <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-neutral-100">
                     {formData.image ? (
                       <Image src={formData.image} alt={formData.title || "Aperçu"} fill className="object-cover" />
@@ -557,28 +566,40 @@ export default function CreateContextPage() {
                   </div>
                   <div>
                     <h3 className="text-lg font-black text-neutral-900 leading-tight">{formData.title || "Anaran'ny lohahevitra..."}</h3>
-                    <p className="text-xs text-neutral-500 mt-1">{formData.type} • {formData.sessionMode === "CONTINUOUS_LIVE" ? "Live mitohy" : "Live miatoato"}</p>
+                    <div className="mt-3 grid grid-cols-1 gap-2">
+                      <span className="h-12 inline-flex items-center rounded-xl bg-neutral-50 border border-neutral-100 px-4 text-sm font-black text-primary">
+                        {formData.type}
+                      </span>
+                      <span className="h-12 inline-flex items-center rounded-xl bg-neutral-50 border border-neutral-100 px-4 text-sm font-black text-neutral-600">
+                        {formData.sessionMode === "CONTINUOUS_LIVE" ? "Live mitohy" : "Live miatoato"}
+                      </span>
+                    </div>
                   </div>
                   <p className="text-sm text-neutral-600 leading-relaxed">{formData.description || "Famaritana ny lohahevitra..."}</p>
                   <div className="space-y-2">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Anjara asa ({validRolesCount})</div>
+                    <div className="text-[10px] font-black uppercase tracking-widest text-neutral-500">
+                      Anjara asa ({validRolesCount})
+                    </div>
                     <div className="space-y-1.5 max-h-36 overflow-auto pr-1">
                       {formData.participantRoles.filter((r) => r.label.trim()).map((role, idx) => (
-                        <div key={`${role.key}-preview-${idx}`} className="text-xs bg-white border border-neutral-100 rounded-lg px-2.5 py-2 flex items-center justify-between">
+                        <div key={`${role.key}-preview-${idx}`} className="h-12 text-sm bg-neutral-50 border border-neutral-100 rounded-xl px-4 py-0 flex items-center justify-between">
                           <span className="font-semibold text-neutral-700">{role.label}</span>
                           <span className="text-neutral-400 font-bold">x{formData.sessionMode === "CONTINUOUS_LIVE" ? 1 : role.slots}</span>
                         </div>
                       ))}
-                      {validRolesCount === 0 && <p className="text-xs text-neutral-400">Tsy mbola misy andraikitra.</p>}
+                      {validRolesCount === 0 && (
+                        <div className="h-12 text-sm bg-neutral-50 border border-neutral-100 rounded-xl px-4 py-0 flex items-center text-neutral-400">
+                          Tsy mbola misy andraikitra.
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className="text-xs text-neutral-500">
+                  <div className="h-12 rounded-xl bg-neutral-50 border border-neutral-100 px-4 py-0 flex items-center text-sm text-neutral-500">
                     <span className="font-bold text-neutral-700">Fe-potoana:</span> {formData.duration || "-"} min
                   </div>
                 </aside>
               </div>
-            </form>
-          </div>
+          </form>
         </div>
       </div>
     </div>

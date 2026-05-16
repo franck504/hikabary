@@ -2,17 +2,14 @@
 
 import React, { useEffect, useState } from "react";
 import { ContextCard } from "@/components/ContextCard";
+import { LiveSessionCard } from "@/components/LiveSessionCard";
 import Link from "next/link";
 import Image from "next/image";
 import { 
   ArrowRight, 
-  Radio, 
-  LayoutGrid, 
   Plus, 
-  Globe,
   Mic2,
   ChevronRight,
-  Users
 } from "lucide-react";
 import { API_URL } from "@/lib/config";
 
@@ -173,65 +170,7 @@ export default function Home() {
           {sessions.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
               {sessions.map((session: any) => (
-                <Link 
-                  key={session.id} 
-                  href={`/live/${session.id}`} 
-                  className="pro-card group h-[400px] relative overflow-hidden bg-neutral-900 border-none hover:shadow-2xl hover:shadow-primary/20 transition-all duration-700"
-                >
-                  {/* Image Placeholder with Gradient Overlay */}
-                  <div className="absolute inset-0 bg-neutral-800 transition-transform duration-1000 group-hover:scale-110">
-                    <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/40 to-transparent z-10"></div>
-                  </div>
-
-                  {/* Content Overlay */}
-                  <div className="absolute inset-0 z-20 p-8 flex flex-col justify-between">
-                    <div className="flex justify-between items-start">
-                      <div className="bg-secondary text-white inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black shadow-xl backdrop-blur-md border border-white/10">
-                        <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse shadow-[0_0_8px_white]"></div>
-                        MIVANTANA
-                      </div>
-                      <div className="bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl text-white/70 text-[9px] font-black uppercase tracking-widest border border-white/5">
-                        <Users size={12} className="inline mr-1.5" />
-                        1.2k
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-3 text-primary text-[10px] font-black uppercase tracking-[0.2em] mb-3">
-                        <span className="w-6 h-[2px] bg-primary"></span>
-                        {session.context?.type || "Kabary"}
-                      </div>
-                      <h3 className="text-white text-3xl font-black mb-6 line-clamp-2 leading-tight tracking-tighter group-hover:text-primary transition-colors duration-500">
-                        {session.title}
-                      </h3>
-                      
-                      <div className="flex items-center justify-between pt-6 border-t border-white/10">
-                        <div className="flex items-center gap-4">
-                          <div className="w-11 h-11 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-white font-black text-sm group-hover:bg-primary transition-all duration-500">
-                            {session.speaker?.photo ? (
-                              <Image
-                                src={session.speaker.photo}
-                                alt={session.speaker.name}
-                                width={44}
-                                height={44}
-                                className="w-full h-full object-cover rounded-2xl"
-                              />
-                            ) : (
-                              session.speaker.name[0]
-                            )}
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-tighter">Mpikabary</span>
-                            <span className="text-sm font-black text-white group-hover:translate-x-1 transition-transform duration-500">{session.speaker.name}</span>
-                          </div>
-                        </div>
-                        <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white opacity-0 group-hover:opacity-100 scale-50 group-hover:scale-100 transition-all duration-500 shadow-xl">
-                          <ChevronRight size={20} />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
+                <LiveSessionCard key={session.id} session={session} />
               ))}
             </div>
           ) : (
@@ -280,7 +219,7 @@ export default function Home() {
               <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white">
                 <Mic2 size={24} />
               </div>
-              <span className="text-2xl font-black tracking-tighter uppercase">FIHAONANKABARY</span>
+              <span className="text-2xl font-black tracking-tighter uppercase">HIKABARY</span>
             </Link>
             <p className="text-neutral-500 max-w-sm text-base leading-relaxed">
               Ny fombantsika, ny hambom-pontsika. Ho an'ny kabary sy ny kolontsaina Malagasy.

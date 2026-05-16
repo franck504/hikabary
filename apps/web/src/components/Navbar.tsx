@@ -81,20 +81,22 @@ export const Navbar = () => {
         ? "glass-morphism py-4 shadow-xl shadow-black/[0.03]"
         : "bg-transparent py-7"
       }`}>
-      <div className="container mx-auto px-6 lg:px-20 flex items-center justify-between">
+      <div className="w-[96%] 2xl:w-[94%] mx-auto px-4 lg:px-8 flex items-center justify-between">
 
-        {/* Left Side: Logo & Links (Links disappear when search is expanded) */}
+        {/* Left Side: Logo */}
         <div className="flex items-center gap-12 flex-grow">
           <Link href="/" className={`flex items-center gap-3 group transition-all duration-500 ${isSearchExpanded ? 'opacity-0 -translate-x-4 pointer-events-none' : 'opacity-100'}`}>
             <div className="w-11 h-11 bg-primary rounded-2xl flex items-center justify-center text-white shadow-xl shadow-primary/20 group-hover:rotate-12 transition-all">
               <Mic2 size={24} />
             </div>
-            <span className="text-xl font-black tracking-tighter text-primary uppercase hidden sm:inline">FIHAONANKABARY</span>
+            <span className="text-xl font-black tracking-tighter text-primary uppercase hidden sm:inline">HIKABARY</span>
           </Link>
+        </div>
 
-          {/* Navigation Links - Hidden when search is active */}
+        {/* Right Side: Search & User */}
+        <div className="flex items-center gap-6">
           {!isSearchExpanded && (
-            <div className="hidden xl:flex items-center gap-10 animate-in fade-in slide-in-from-left-4 duration-500">
+            <div className="hidden xl:flex items-center gap-8 animate-in fade-in slide-in-from-right-4 duration-500">
               <Link href="/explore" className="flex items-center gap-2 text-[10px] font-black text-neutral-400 hover:text-primary uppercase tracking-[0.2em] transition-all group">
                 <Radio size={14} className="text-secondary group-hover:animate-pulse" />
                 Mivantana
@@ -113,10 +115,6 @@ export const Navbar = () => {
               </Link>
             </div>
           )}
-        </div>
-
-        {/* Right Side: Search & User */}
-        <div className="flex items-center gap-6">
 
           {/* Dynamic Search Component */}
           <div

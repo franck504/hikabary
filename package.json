@@ -1,5 +1,5 @@
 {
-  "name": "kabary-platform",
+  "name": "hikabary",
   "private": true,
   "scripts": {
     "dev": "turbo dev",

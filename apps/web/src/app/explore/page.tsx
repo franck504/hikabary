@@ -1,29 +1,59 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { 
-  Radio, 
-  Search, 
-  Clock, 
-  Users, 
-  ChevronRight,
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  BookOpen,
   Filter,
-  PlayCircle
+  Radio,
+  Search,
 } from "lucide-react";
 import Link from "next/link";
 import { API_URL } from "@/lib/config";
-import Image from "next/image";
+import { LiveSessionCard } from "@/components/LiveSessionCard";
+
+type SessionMode = "CONTINUOUS_LIVE" | "ASYNCHRONOUS_LIVE";
+
+type LiveSession = {
+  id: string;
+  title?: string | null;
+  status: string;
+  participantRoleLabel?: string | null;
+  createdAt: string;
+  liveThumbnail?: string | null;
+  context?: {
+    id: string;
+    title: string;
+    type: string;
+    image?: string | null;
+    description?: string | null;
+    sessionMode?: SessionMode | null;
+  } | null;
+  speaker?: {
+    id: string;
+    name: string;
+    role: string;
+    photo?: string | null;
+  } | null;
+  participants?: {
+    id?: string | null;
+    name?: string | null;
+    photo?: string | null;
+    participantRoleLabel?: string | null;
+  }[];
+};
 
 export default function ExploreLivePage() {
-  const [sessions, setSessions] = useState([]);
+  const [sessions, setSessions] = useState<LiveSession[]>([]);
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+  const [activeType, setActiveType] = useState("Rehetra");
 
   useEffect(() => {
     const fetchLiveSessions = async () => {
       try {
         const res = await fetch(`${API_URL}/sessions/active`);
         const data = await res.json();
-        setSessions(data);
+        setSessions(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Erreur:", err);
       } finally {
@@ -33,124 +63,137 @@ export default function ExploreLivePage() {
     fetchLiveSessions();
   }, []);
 
-  return (
-    <div className="min-h-screen bg-surface pt-32 pb-20">
-      <div className="container mx-auto px-6 lg:px-20">
-        
-        {/* Header Section */}
-        <div className="max-w-3xl mb-16">
-          <div className="inline-flex items-center gap-3 bg-secondary/10 text-secondary px-4 py-2 rounded-2xl mb-6 border border-secondary/10 animate-pulse">
-            <Radio size={16} />
-            <span className="text-[10px] font-black uppercase tracking-[0.25em]">Mivantana izao</span>
-          </div>
-          <h1 className="text-5xl md:text-6xl font-black text-neutral-900 uppercase tracking-tighter leading-none mb-6">
-            Fikarohana
-          </h1>
-          <p className="text-lg text-neutral-500 font-medium leading-relaxed">
-            Midira mivantana amin'ireo fifanakalozana kabary mandeha amin'izao fotoana izao.
-          </p>
-        </div>
+  const types = useMemo(() => {
+    const values = sessions.map((session) => session.context?.type).filter(Boolean) as string[];
+    return ["Rehetra", ...Array.from(new Set(values))];
+  }, [sessions]);
 
-        {/* Live Grid */}
+  const filteredSessions = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    return sessions.filter((session) => {
+      const context = session.context;
+      const matchesType = activeType === "Rehetra" || context?.type === activeType;
+      const searchable = [
+        session.title,
+        context?.title,
+        context?.description,
+        context?.type,
+        session.participantRoleLabel,
+        session.speaker?.name,
+        ...(session.participants?.map((participant) => [
+          participant.name,
+          participant.participantRoleLabel,
+        ]).flat() || []),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return matchesType && (!normalizedQuery || searchable.includes(normalizedQuery));
+    });
+  }, [activeType, query, sessions]);
+
+  return (
+    <div className="min-h-screen bg-surface pt-32 pb-20 relative overflow-hidden">
+      <div
+        className="absolute inset-0 pointer-events-none bg-fixed opacity-[0.12]"
+        style={{
+          backgroundImage: "url('/hero_pattern.png')",
+          backgroundSize: "650px",
+          backgroundPosition: "center",
+        }}
+      />
+
+      <div className="container mx-auto px-6 lg:px-20 relative z-10">
+        <header className="mb-10 flex flex-col xl:flex-row xl:items-end xl:justify-between gap-8">
+          <div className="max-w-3xl">
+            <div className="inline-flex h-9 items-center gap-2 bg-secondary/10 text-secondary px-3 rounded-xl mb-5 border border-secondary/10">
+              <Radio size={15} />
+              <span className="text-[10px] font-black uppercase tracking-[0.25em]">Mivantana izao</span>
+            </div>
+            <h1 className="text-4xl md:text-5xl font-black text-neutral-900 uppercase tracking-tighter leading-none mb-4">
+              Fikarohana Live
+            </h1>
+            <p className="text-base text-neutral-500 font-medium leading-relaxed">
+              Jereo ireo kabary mandeha amin&apos;izao fotoana izao, ny andraikitry ny mpandray anjara ary ny fomba fihaonana.
+            </p>
+          </div>
+
+          <div className="w-full xl:w-[420px] space-y-3">
+            <div className="h-12 rounded-xl bg-white border border-neutral-100 px-4 flex items-center gap-3 shadow-sm">
+              <Search size={16} className="text-neutral-400" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Hikaroka lohahevitra na mpikabary..."
+                className="w-full bg-transparent border-none outline-none text-sm font-semibold text-neutral-700 placeholder:text-neutral-400"
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {types.map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setActiveType(type)}
+                  className={`h-10 rounded-xl border px-3 text-[10px] font-black uppercase tracking-widest transition-colors ${
+                    activeType === type
+                      ? "bg-primary text-white border-primary"
+                      : "bg-white text-neutral-500 border-neutral-100 hover:border-primary/30 hover:text-primary"
+                  }`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+          </div>
+        </header>
+
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 animate-pulse">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-96 bg-neutral-100 rounded-3xl"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-pulse">
+            {[1, 2, 3].map((item) => (
+              <div key={item} className="h-[420px] bg-white rounded-2xl border border-neutral-100" />
             ))}
           </div>
-        ) : sessions.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {sessions.map((session) => (
-              <Link 
-                key={session.id} 
-                href={`/live/${session.id}`} 
-                className="pro-card group h-[450px] relative overflow-hidden"
-              >
-                {/* Session Thumbnail / Background */}
-                <div className="absolute inset-0 bg-neutral-950">
-                  {/* On pourrait mettre l'image de l'orateur ici */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/40 to-transparent z-10"></div>
-                </div>
-
-                <div className="absolute top-6 left-6 z-20">
-                  <div className="bg-secondary text-white inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black shadow-xl">
-                    <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></div>
-                    MIVANTANA
-                  </div>
-                </div>
-
-                <div className="absolute bottom-10 left-10 right-10 z-20">
-                  <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-widest mb-3">
-                    <Clock size={12} />
-                    Efa mandeha 15mn
-                  </div>
-                  <h3 className="text-3xl font-black text-white mb-4 line-clamp-2 leading-tight group-hover:text-primary transition-colors">
-                    {session.title || "Lohahevitra tsy fantatra"}
-                  </h3>
-                  
-                  <div className="flex items-center justify-between pt-6 border-t border-white/10">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center text-white font-black text-sm">
-                        {session.speaker?.photo ? (
-                          <Image
-                            src={session.speaker.photo}
-                            alt={session.speaker.name}
-                            width={40}
-                            height={40}
-                            className="w-full h-full object-cover rounded-xl"
-                          />
-                        ) : (
-                          session.speaker.name[0]
-                        )}
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-tighter">Mpikabary</span>
-                        <span className="text-xs font-black text-white">{session.speaker.name}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 text-white/50 text-[10px] font-black">
-                      <Users size={14} />
-                      1.2k
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Play Icon on hover */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                  <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-white shadow-2xl scale-75 group-hover:scale-100 transition-transform duration-500">
-                    <PlayCircle size={48} />
-                  </div>
-                </div>
-              </Link>
+        ) : filteredSessions.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {filteredSessions.map((session) => (
+              <LiveSessionCard key={session.id} session={session} />
             ))}
           </div>
         ) : (
-          <div className="pro-card p-32 flex flex-col items-center justify-center text-center bg-white/50 border-dashed border-4 border-neutral-100">
+          <div className="pro-card p-16 md:p-24 flex flex-col items-center justify-center text-center bg-white/75 border-dashed border-4 border-neutral-100">
             <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center text-neutral-200 mb-6 shadow-sm">
               <Radio size={32} />
             </div>
             <h3 className="text-2xl font-black text-neutral-300 uppercase tracking-widest">Tsy misy live mandeha</h3>
-            <p className="text-neutral-400 text-sm mt-2 font-medium">Hahazo fampandrenesana ianao raha vao misy manomboka.</p>
+            <p className="text-neutral-400 text-sm mt-2 font-medium">Hiseho eto avy hatrany ireo kabary vao manomboka.</p>
           </div>
         )}
 
-        {/* Categories Quick Filter */}
-        <div className="mt-24">
-          <header className="mb-12 flex items-center justify-between">
-            <h4 className="text-2xl font-black text-neutral-900 uppercase tracking-tighter">Sokajy malaza</h4>
-            <Link href="/library" className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">Hijery rehetra</Link>
+        <section className="mt-20">
+          <header className="mb-8 flex items-center justify-between gap-4">
+            <div>
+              <h4 className="text-2xl font-black text-neutral-900 uppercase tracking-tighter">Lohahevitra hafa</h4>
+              <p className="text-sm text-neutral-500 font-medium mt-1">Raha mbola tsy misy live, afaka misafidy sujet hidirana ianao.</p>
+            </div>
+            <Link href="/library" className="h-12 rounded-xl bg-white border border-neutral-100 px-4 inline-flex items-center gap-2 text-[10px] font-black text-primary uppercase tracking-widest hover:border-primary/30 transition-colors">
+              <BookOpen size={15} />
+              Hijery rehetra
+            </Link>
           </header>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            {["Fanambadiana", "Famadihana", "Fandroana", "Tsodrano", "Fiarahamonina", "Hafa"].map(cat => (
-              <button key={cat} className="pro-card p-6 flex flex-col items-center gap-4 hover:border-primary/40 transition-all group bg-white">
-                <div className="w-12 h-12 rounded-2xl bg-neutral-50 flex items-center justify-center text-neutral-400 group-hover:bg-primary/5 group-hover:text-primary transition-all">
-                  <Filter size={20} />
-                </div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-neutral-800">{cat}</span>
-              </button>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+            {["Fanambadiana", "Famadihana", "Fandroana", "Tsodrano", "Fiarahamonina", "Hafa"].map((cat) => (
+              <Link
+                key={cat}
+                href="/library"
+                className="h-12 rounded-xl bg-white border border-neutral-100 px-4 flex items-center justify-between gap-3 hover:border-primary/30 hover:text-primary transition-colors"
+              >
+                <span className="text-[10px] font-black uppercase tracking-widest text-neutral-700">{cat}</span>
+                <Filter size={15} className="text-neutral-300" />
+              </Link>
             ))}
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );

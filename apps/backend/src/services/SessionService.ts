@@ -3,6 +3,25 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export class SessionService {
+  private toParticipant(session: any) {
+    return {
+      id: session.speaker.id,
+      name: session.speaker.name,
+      role: session.speaker.role,
+      photo: session.speaker.photo,
+      participantRoleKey: session.participantRoleKey,
+      participantRoleLabel: session.participantRoleLabel,
+    };
+  }
+
+  private attachParticipants(session: any, relatedSessions: any[]) {
+    return {
+      ...session,
+      liveThumbnail: session.liveThumbnail || relatedSessions.find((relatedSession) => relatedSession.liveThumbnail)?.liveThumbnail || null,
+      participants: relatedSessions.map((relatedSession) => this.toParticipant(relatedSession)),
+    };
+  }
+
   async createSession(data: {
     contextId: string;
     speakerId: string;
@@ -34,7 +53,7 @@ export class SessionService {
       }
     }
 
-    return await prisma.session.create({
+    const createdSession = await prisma.session.create({
       data: {
         title: data.title,
         contextId: data.contextId,
@@ -50,10 +69,33 @@ export class SessionService {
         }
       }
     });
+
+    if (context.sessionMode !== "CONTINUOUS_LIVE") {
+      return createdSession;
+    }
+
+    const liveSessionsForContext = await prisma.session.findMany({
+      where: {
+        contextId: data.contextId,
+        status: "ONGOING",
+      },
+      include: {
+        context: true,
+        speaker: {
+          select: { id: true, name: true, role: true, photo: true }
+        }
+      },
+      orderBy: {
+        createdAt: "asc"
+      }
+    });
+
+    const primarySession = liveSessionsForContext[0] || createdSession;
+    return this.attachParticipants(primarySession, liveSessionsForContext);
   }
 
   async getActiveSessions() {
-    return await prisma.session.findMany({
+    const sessions = await prisma.session.findMany({
       where: {
         status: "ONGOING"
       },
@@ -67,10 +109,31 @@ export class SessionService {
         createdAt: "desc"
       }
     });
+
+    const groupedContinuousSessions = new Set<string>();
+    const activeSessions: any[] = [];
+
+    for (const session of sessions) {
+      if (session.context.sessionMode !== "CONTINUOUS_LIVE") {
+        activeSessions.push(this.attachParticipants(session, [session]));
+        continue;
+      }
+
+      if (groupedContinuousSessions.has(session.contextId)) continue;
+      const relatedSessions = sessions
+        .filter((relatedSession: any) => relatedSession.contextId === session.contextId)
+        .sort((a: any, b: any) => a.createdAt.getTime() - b.createdAt.getTime());
+      const primarySession = relatedSessions[0] || session;
+
+      groupedContinuousSessions.add(session.contextId);
+      activeSessions.push(this.attachParticipants(primarySession, relatedSessions));
+    }
+
+    return activeSessions.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
   async getSessionById(id: string) {
-    return await prisma.session.findUnique({
+    const session = await prisma.session.findUnique({
       where: { id },
       include: {
         context: true,
@@ -80,6 +143,78 @@ export class SessionService {
         reactions: true
       }
     });
+
+    if (!session) return null;
+
+    if (session.context.sessionMode !== "CONTINUOUS_LIVE") {
+      return this.attachParticipants(session, [session]);
+    }
+
+    const relatedSessions = await prisma.session.findMany({
+      where: {
+        contextId: session.contextId,
+        status: "ONGOING",
+      },
+      include: {
+        context: true,
+        speaker: {
+          select: { id: true, name: true, role: true, photo: true }
+        }
+      },
+      orderBy: {
+        createdAt: "asc"
+      }
+    });
+
+    return this.attachParticipants(session, relatedSessions);
+  }
+
+  async updateLiveThumbnail(sessionId: string, userId: string, liveThumbnail: string) {
+    if (!liveThumbnail.startsWith("data:image/")) {
+      throw new Error("Sary tsy mety.");
+    }
+
+    const session = await prisma.session.findUnique({
+      where: { id: sessionId },
+      include: {
+        context: true,
+      },
+    });
+
+    if (!session) {
+      throw new Error("Tsy hita io session io");
+    }
+
+    const activeParticipant = await prisma.session.findFirst({
+      where: {
+        contextId: session.contextId,
+        status: "ONGOING",
+        speakerId: userId,
+      },
+      select: { id: true },
+    });
+
+    if (!activeParticipant) {
+      throw new Error("Tsy afaka manavao sary amin'ity live ity ianao.");
+    }
+
+    if (session.context.sessionMode === "CONTINUOUS_LIVE") {
+      await prisma.session.updateMany({
+        where: {
+          contextId: session.contextId,
+          status: "ONGOING",
+        },
+        data: { liveThumbnail },
+      });
+      return { liveThumbnail };
+    }
+
+    await prisma.session.update({
+      where: { id: sessionId },
+      data: { liveThumbnail },
+    });
+
+    return { liveThumbnail };
   }
 
   async addReaction(sessionId: string, type: string, userId?: string) {

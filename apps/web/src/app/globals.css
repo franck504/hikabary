@@ -41,17 +41,17 @@
 
   /* Style de base pour tous les boutons pro */
   .pro-button-base {
-    @apply px-6 py-3 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50;
+    @apply h-12 px-6 py-0 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50;
   }
 
   .pro-button-primary {
     @apply bg-primary text-white hover:shadow-lg hover:shadow-primary/20;
-    @apply px-6 py-3 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50;
+    @apply h-12 px-6 py-0 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50;
   }
 
   .pro-button-outline {
     @apply border-2 border-primary text-primary hover:bg-primary/5;
-    @apply px-6 py-3 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50;
+    @apply h-12 px-6 py-0 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50;
   }
 
   .glass-morphism {

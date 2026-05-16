@@ -16,7 +16,7 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "Fihaonankabary | Sehatry ny kabary Malagasy",
+  title: "Hikabary | Sehatry ny kabary Malagasy",
   description: "Ny fombantsika, ny hambom-pontsika. Ho an'ny kabary sy ny kolontsaina Malagasy.",
 };
 

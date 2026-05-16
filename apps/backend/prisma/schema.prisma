@@ -49,6 +49,7 @@ model Session {
   status      String    @default("STARTING") 
   participantRoleKey   String?
   participantRoleLabel String?
+  liveThumbnail String? @db.Text
   
   contextId   String
   context     Context   @relation(fields: [contextId], references: [id])
